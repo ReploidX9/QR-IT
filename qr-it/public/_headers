@@ -1,0 +1,11 @@
+# Cloudflare Pages response headers. (GitHub Pages ignores this file; the
+# page's own Content-Security-Policy meta tag still applies there.)
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+
+/sw.js
+  Cache-Control: no-cache

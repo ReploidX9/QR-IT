@@ -1,0 +1,355 @@
+<title>QR-IT</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: two-pane tool. Form on the left, sticky preview on the right; stacks to one column on phones. */
+:root {
+  --bg: #f1f2f6;
+  --surface: #ffffff;
+  --fg: #161924;
+  --muted: #5a6072;
+  --line: #d8dbe4;
+  --accent: #2443c9;
+  --accent-fg: #ffffff;
+  --warn: #8a4b00;
+  --warn-bg: #fff3dd;
+  --ok: #17663a; --ok-bg: #e2f4e8; --bad: #a3221b; --bad-bg: #fde6e4;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12141b; --surface: #1b1e28; --fg: #e8eaf1; --muted: #9aa0b3; --line: #2f3342;
+    --accent: #7d95ff; --accent-fg: #0d1020; --warn: #ffc46b; --warn-bg: #3a2a10;
+    --ok: #7fdca3; --ok-bg: #133524; --bad: #ff9b92; --bad-bg: #3d1714;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12141b; --surface: #1b1e28; --fg: #e8eaf1; --muted: #9aa0b3; --line: #2f3342;
+  --accent: #7d95ff; --accent-fg: #0d1020; --warn: #ffc46b; --warn-bg: #3a2a10;
+    --ok: #7fdca3; --ok-bg: #133524; --bad: #ff9b92; --bad-bg: #3d1714;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 40px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 24px; }
+header { display: grid; gap: 6px; }
+h1 { margin: 0; font-size: 1.75rem; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; text-wrap: balance; }
+.mark { width: 26px; height: 26px; flex: none; }
+h1 .it { color: var(--accent); }
+.promise { margin: 0; color: var(--muted); max-width: 62ch; }
+.promise strong { color: var(--fg); font-weight: 600; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: 24px; align-items: start; }
+@media (max-width: 820px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 20px; min-width: 0; }
+.section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin: 0; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; min-width: 0; }
+legend { padding: 0; margin-bottom: 10px; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab {
+  font: inherit; font-size: 0.9rem; padding: 6px 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: transparent; color: var(--fg);
+}
+.tab[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.tab:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .file:focus-within {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+label.field { display: grid; gap: 5px; font-size: 0.88rem; font-weight: 500; min-width: 0; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+input[type="text"], input[type="email"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
+  font: inherit; font-size: 0.95rem; width: 100%; padding: 9px 11px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+}
+textarea { resize: vertical; min-height: 92px; font-family: var(--font-mono); font-size: 0.88rem; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 0.88rem; }
+.hint { font-size: 0.8rem; color: var(--muted); margin: 0; }
+
+.swatch { display: flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.swatch input[type="color"] { width: 34px; height: 30px; border: 0; padding: 0; background: none; cursor: pointer; }
+.swatch code { font-family: var(--font-mono); font-size: 0.85rem; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.range-head { display: flex; justify-content: space-between; }
+.range-head output { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.file { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.btn { position: relative;
+  font: inherit; font-size: 0.9rem; font-weight: 600; padding: 9px 16px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg); display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.logo-thumb { width: 34px; height: 34px; object-fit: contain; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+
+.preview { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+.stage {
+  border-radius: 8px; border: 1px dashed var(--line); padding: 14px; display: grid; place-items: center;
+  background-image: linear-gradient(45deg, var(--line) 25%, transparent 25%), linear-gradient(-45deg, var(--line) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--line) 75%), linear-gradient(-45deg, transparent 75%, var(--line) 75%);
+  background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+.stage img { width: 100%; max-width: 340px; height: auto; display: block; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.empty { aspect-ratio: 1; width: 100%; max-width: 340px; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 24px; background: var(--surface); border-radius: 6px; font-size: 0.9rem; }
+.stage img.crisp { image-rendering: pixelated; }
+.scan { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; justify-self: start; background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.scan::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.scan[data-state="ok"] { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+.scan[data-state="warn"] { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+.scan[data-state="bad"] { background: var(--bad-bg); color: var(--bad); border-color: transparent; }
+.linkbtn { font: inherit; font-size: 0.82rem; background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; justify-self: start; }
+.meta { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.notice { font-size: 0.85rem; padding: 10px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); margin: 0; }
+.status { font-size: 0.85rem; color: var(--muted); min-height: 1.3em; margin: 0; }
+#svg-fallback { width: 100%; min-height: 120px; font-size: 0.75rem; }
+
+.view { display: grid; gap: 14px; min-width: 0; }
+.card-view { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
+.card-view img { width: 100%; max-width: 240px; height: auto; display: block; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.batch-count { margin: 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.progress { height: 6px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+.progress > div { height: 100%; width: 0; background: var(--accent); }
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; max-height: min(640px, 70vh); overflow-y: auto; padding: 2px; }
+.thumbs .ph { aspect-ratio: 1; display: grid; place-items: center; text-align: center; font-size: 0.7rem; color: var(--bad); background: var(--bad-bg); border: 2px solid var(--bad); border-radius: 4px; padding: 4px; }
+.thumbs:empty { display: none; }
+.thumbs figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
+.thumbs img { width: 100%; height: auto; display: block; border-radius: 4px; border: 2px solid transparent; }
+.thumbs figure[data-state="bad"] img { border-color: var(--bad); }
+.thumbs figure[data-state="warn"] img { border-color: var(--warn); }
+.thumbs figcaption { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thumbs figure[data-state="bad"] figcaption { color: var(--bad); }
+.more { font-size: 0.8rem; color: var(--muted); margin: 0; }
+#print-area { display: none; }
+@media print {
+  @page { margin: 10mm; }
+  body { background: #fff; padding: 0; }
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { display: block !important; text-align: center; }
+  #print-area img { width: 105mm; height: auto; }
+}
+.why { color: var(--muted); font-size: 0.88rem; max-width: 70ch; display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 18px; }
+.why p { margin: 0; }
+.why strong { color: var(--fg); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>
+      <svg class="mark" viewBox="0 0 7 7" aria-hidden="true"><path fill="currentColor" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2z" fill-rule="evenodd"/></svg>
+      <span>QR-<span class="it">IT</span></span>
+    </h1>
+    <p class="promise"><strong>Static QR codes that never expire.</strong> No account, no watermark, no tracking. Everything is generated in your browser and nothing is uploaded.</p>
+  </header>
+
+  <div class="grid">
+    <div class="panel">
+      <fieldset>
+        <legend class="section-label">What goes in the code</legend>
+        <div class="tabs" role="tablist" aria-label="Content type">
+          <button class="tab" role="tab" id="tab-text" data-mode="text" aria-selected="true" aria-controls="p-text">Link or text</button>
+          <button class="tab" role="tab" id="tab-wifi" data-mode="wifi" aria-selected="false" aria-controls="p-wifi">Wi‑Fi</button>
+          <button class="tab" role="tab" id="tab-contact" data-mode="contact" aria-selected="false" aria-controls="p-contact">Contact</button>
+          <button class="tab" role="tab" id="tab-email" data-mode="email" aria-selected="false" aria-controls="p-email">Email</button>
+          <button class="tab" role="tab" id="tab-batch" data-mode="batch" aria-selected="false" aria-controls="p-batch">Batch</button>
+        </div>
+
+        <div id="p-text" role="tabpanel" aria-labelledby="tab-text" class="mode-panel">
+          <label class="field">Link or text
+            <textarea id="t-text" spellcheck="false">https://example.com</textarea>
+          </label>
+        </div>
+
+        <div id="p-wifi" role="tabpanel" aria-labelledby="tab-wifi" class="mode-panel" hidden>
+          <fieldset>
+            <div class="row">
+              <label class="field">Network name (SSID)<input type="text" id="w-ssid" autocomplete="off" placeholder="Home-Network"></label>
+              <label class="field">Security
+                <select id="w-sec"><option value="WPA">WPA / WPA2 / WPA3</option><option value="WEP">WEP</option><option value="nopass">None (open)</option></select>
+              </label>
+            </div>
+            <label class="field" id="w-pass-wrap">Password<input type="password" id="w-pass" autocomplete="off"></label>
+            <div class="row">
+              <label class="check"><input type="checkbox" id="w-show"> Show password</label>
+              <label class="check"><input type="checkbox" id="w-hidden"> Hidden network</label>
+            </div>
+            <p class="hint">Phones join the network when they scan it. Most iOS and Android cameras support this.</p>
+            <div class="row">
+              <label class="field">Card heading<input type="text" id="w-heading" value="Wi‑Fi" maxlength="30" autocomplete="off"></label>
+              <label class="check" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="w-cardpass" checked> Print password on the card</label>
+            </div>
+          </fieldset>
+        </div>
+
+        <div id="p-contact" role="tabpanel" aria-labelledby="tab-contact" class="mode-panel" hidden>
+          <fieldset>
+            <div class="row">
+              <label class="field">First name<input type="text" id="c-first" autocomplete="off"></label>
+              <label class="field">Last name<input type="text" id="c-last" autocomplete="off"></label>
+            </div>
+            <div class="row">
+              <label class="field">Phone<input type="tel" id="c-tel" autocomplete="off"></label>
+              <label class="field">Email<input type="email" id="c-email" autocomplete="off"></label>
+            </div>
+            <div class="row">
+              <label class="field">Company<input type="text" id="c-org" autocomplete="off"></label>
+              <label class="field">Website<input type="url" id="c-url" autocomplete="off"></label>
+            </div>
+            <p class="hint">Saved as a vCard. Scanning offers to add the contact.</p>
+          </fieldset>
+        </div>
+
+        <div id="p-email" role="tabpanel" aria-labelledby="tab-email" class="mode-panel" hidden>
+          <fieldset>
+            <label class="field">To<input type="email" id="e-to" autocomplete="off"></label>
+            <label class="field">Subject<input type="text" id="e-subject" autocomplete="off"></label>
+            <label class="field">Message<textarea id="e-body" style="font-family:var(--font-ui)"></textarea></label>
+          </fieldset>
+        </div>
+
+        <div id="p-batch" role="tabpanel" aria-labelledby="tab-batch" class="mode-panel" hidden>
+          <fieldset>
+            <label class="field">One code per line
+              <textarea id="b-list" spellcheck="false" rows="8">https://assets.example.com/LT-0142, LT-0142
+https://assets.example.com/LT-0143, LT-0143
+https://assets.example.com/LT-0144, LT-0144
+https://assets.example.com/PR-0031, PR-0031
+https://assets.example.com/PR-0032, PR-0032
+https://assets.example.com/MN-0207, MN-0207</textarea>
+            </label>
+            <p class="hint">Add a comma and a label after any line to name its file. CSV works too: column 1 is the content, column 2 the label. Wrap content that contains commas in "double quotes". Up to 1,000 codes.</p>
+            <div class="file">
+              <label class="btn" for="b-file">Load CSV or text file<input type="file" id="b-file" accept=".csv,.txt,text/csv,text/plain"></label>
+              <span class="hint" id="b-file-name"></span>
+            </div>
+            <div class="row">
+              <label class="check"><input type="checkbox" id="b-header"> First row is a header</label>
+              <label class="check"><input type="checkbox" id="b-labelcap" checked> Print each label under its code</label>
+            </div>
+            <label class="field">Files in the ZIP
+              <select id="b-format"><option value="png">PNG</option><option value="svg">SVG</option><option value="both">PNG and SVG</option></select>
+            </label>
+          </fieldset>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="section-label">Look</legend>
+        <div class="row">
+          <label class="field">Foreground
+            <span class="swatch"><input type="color" id="fg" value="#000000"><code id="fg-hex">#000000</code></span>
+          </label>
+          <label class="field">Background
+            <span class="swatch"><input type="color" id="bg" value="#ffffff"><code id="bg-hex">#FFFFFF</code></span>
+          </label>
+        </div>
+        <p class="notice" id="contrast" hidden></p>
+        <div class="row">
+          <label class="field">Error correction
+            <select id="ec">
+              <option value="L">L · 7% (smallest code)</option>
+              <option value="M" selected>M · 15% (default)</option>
+              <option value="Q">Q · 25%</option>
+              <option value="H">H · 30% (most damage‑proof)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="range-head">Quiet zone <output id="margin-out">4 modules</output></span>
+            <input type="range" id="margin" min="0" max="8" step="1" value="4">
+          </label>
+        </div>
+        <label class="field">
+          <span class="range-head">Export size <output id="size-out">1024 px</output></span>
+          <input type="range" id="size" min="256" max="4096" step="128" value="1024">
+        </label>
+        <div class="field" style="display:grid;gap:6px">
+          <span style="font-size:0.88rem;font-weight:500">Logo in the centre <span class="hint" style="display:inline">(optional)</span></span>
+          <div class="file">
+            <label class="btn" for="logo">Choose image<input type="file" id="logo" accept="image/*"></label>
+            <img class="logo-thumb" id="logo-thumb" alt="Selected logo" hidden>
+            <button class="btn" type="button" id="logo-clear" hidden>Remove</button>
+          </div>
+          <p class="hint">Adding a logo switches error correction to H so the code still scans.</p>
+        </div>
+        <label class="field"><span>Caption under the code <span class="hint" style="display:inline;font-weight:400">(optional)</span></span>
+          <input type="text" id="caption" maxlength="60" autocomplete="off" placeholder="Scan for Wi‑Fi">
+        </label>
+        <button class="linkbtn" type="button" id="reset">Reset look to defaults</button>
+      </fieldset>
+    </div>
+
+    <aside class="panel preview" aria-label="Preview and download">
+     <div class="view" id="single-view">
+      <div class="stage">
+        <img id="out" alt="Generated QR code" hidden>
+        <div class="empty" id="empty">Fill in the form and your code appears here.</div>
+      </div>
+      <p class="scan" id="scan" data-state="pending" role="status">Checking…</p>
+      <p class="meta" id="meta">&nbsp;</p>
+      <div class="actions">
+        <button class="btn primary" type="button" id="dl-png">Download PNG</button>
+        <button class="btn" type="button" id="dl-svg">Download SVG</button>
+        <button class="btn" type="button" id="copy-png">Copy image</button>
+        <button class="btn" type="button" id="copy-svg">Copy SVG</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+      <p class="hint" id="frame-note" hidden>If downloads are blocked in this preview, right‑click or long‑press the code to save it.</p>
+      <textarea id="svg-fallback" readonly hidden aria-label="SVG markup"></textarea>
+      <div class="card-view" id="card-view" hidden>
+        <p class="section-label">Printable Wi‑Fi card · A6</p>
+        <img id="card-img" alt="Wi‑Fi card with the code, network name and password">
+        <div class="actions">
+          <button class="btn" type="button" id="card-dl">Download card</button>
+          <button class="btn" type="button" id="card-print">Print card</button>
+        </div>
+      </div>
+     </div>
+     <div class="view" id="batch-view" hidden>
+      <p class="batch-count" id="b-count">0 codes ready</p>
+      <p class="hint" style="margin:0">Uses your look settings. Each code is test-scanned before it goes in the ZIP, along with an index.csv listing every file.</p>
+      <div class="progress" id="b-progress" hidden><div id="b-bar"></div></div>
+      <div class="actions">
+        <button class="btn primary" type="button" id="b-run">Generate and check</button>
+        <button class="btn" type="button" id="b-zip" disabled>Download ZIP</button>
+      </div>
+      <p class="scan" id="b-scan" hidden></p>
+      <div class="thumbs" id="b-thumbs"></div>
+      <p class="more" id="b-more" hidden></p>
+      <p class="status" id="b-status" role="status"></p>
+     </div>
+    </aside>
+  </div>
+
+  <footer class="why">
+    <p><strong>Why these never expire:</strong> the data is stored in the pattern itself. Many "free" generators make dynamic codes that point at their own redirect server, then switch it off when a trial ends. A static code has no server to switch off.</p>
+    <p><strong>Every code is test-scanned</strong> in your browser as you edit, using the same kind of decoder a phone uses. Your look settings are remembered on this device only; the content you type is never stored.</p>
+    <p><strong>Batch mode</strong> is built for asset tags, kit labels and room signs: paste a list or load a spreadsheet export and get every code in one ZIP.</p>
+    <p>Print tip: keep the quiet zone at 4 modules and test-scan before you print a batch.</p>
+  </footer>
+</div>
+<div id="print-area"></div>
+
+<script>
+/* qrcode-generator (c) Kazuhiko Arase, MIT licence */
+/*__QRLIB__*/
+</script>
+<script>
+/* jsQR (c) Cosmo Wolfe, Apache-2.0 licence */
+/*__JSQR__*/
+</script>
+<script>
+/*__APP__*/
+</script>
