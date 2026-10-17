@@ -54,22 +54,6 @@ No dependencies beyond Python 3. Open `public/index.html` directly to test, or r
 `python3 -m http.server -d public 8000` and visit http://localhost:8000 to test
 offline mode too. Commit the rebuilt `public/` folder.
 
-## Deploying (Cloudflare Pages, free)
-
-1. Push this repo to GitHub.
-2. In the Cloudflare dashboard go to **Workers & Pages → Create → Pages →
-   Connect to Git** and pick the repo.
-3. Build settings: Framework preset **None**, build command **empty**,
-   build output directory **`public`**.
-4. Deploy. You get `https://<project-name>.pages.dev`; add your own domain under
-   **Custom domains** whenever you like.
-
-Every push to `main` redeploys automatically.
-
-GitHub Pages also works (serve the `public/` folder via a GitHub Actions Pages
-workflow), but it ignores `_headers`, so you lose the extra security headers.
-The in-page Content-Security-Policy still applies.
-
 ## Licence
 
 MIT, see `LICENSE`. Bundled libraries keep their own licences, listed in
